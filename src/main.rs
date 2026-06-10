@@ -1,3 +1,9 @@
+mod field;
+mod hash;
+mod keys;
+mod matrix;
+mod signature;
+
 fn main() {
-    println!("Hello, world!");
+    println!("Salatmaxxing!");
 }
