@@ -1,0 +1,6 @@
+# Build output
+/target/
+
+# Editor & IDE
+.vscode/
+.idea/
