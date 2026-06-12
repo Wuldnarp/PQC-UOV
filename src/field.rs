@@ -43,6 +43,14 @@ impl F16Element {
         assert!(self.0 != 0, "zero has no inverse");
         F16Element(INV_TABLE[self.0 as usize])
     }
+
+    pub fn new(val: u8) -> Self {
+        F16Element(val & 0xF)
+    }
+    
+    pub fn zero() -> Self {
+        F16Element(0)
+    }
 }
 
 /// Precompute a 16x16 table for fast Look-up 
