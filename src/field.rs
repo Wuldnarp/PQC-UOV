@@ -3,7 +3,7 @@ use std::ops::{Add, Mul, Sub};
 /// 
 /// Only the lower 4 bits are used
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct F16Element(u8);
+pub struct F16Element(pub u8);
 
 #[cfg(test)]
 #[path = "tests/fieldTests.rs"]

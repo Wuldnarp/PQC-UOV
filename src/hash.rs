@@ -9,6 +9,34 @@ use shake::digest::{Update, ExtendableOutput};
 
 pub type Aes128Ctr = ctr::Ctr128BE<aes::Aes128>;
 
+#[cfg(test)]
+#[path = "tests/hashTests.rs"]
+mod tests;
+
+// Parameters for ov-Is
+// Maybe not the best location if others need to use and stuff but yes
+const M: usize = 64; 
+const V: usize = 96;
+
+// Helper function for unpacking bytes into a vector of F16 elements
+// Extracts the least significant nibble first and the most significant nibble.
+fn unpack_f16(buffer: &[u8], count: usize) -> Vec<F16Element> {
+    let mut elements = Vec::with_capacity(count);
+    
+    for &byte in buffer {
+        elements.push(F16Element::new(byte & 0x0F));
+        if elements.len() == count {
+            break;
+        }
+        
+        elements.push(F16Element::new((byte >> 4) & 0x0F));
+        if elements.len() == count {
+            break;
+        }
+    }
+    elements
+}
+
 /// Hash the message with salt to produce the target vector t ∈ F_16^m
 /// 
 /// t is what the signature must map to under the public polynomials

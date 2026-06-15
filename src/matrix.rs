@@ -2,7 +2,7 @@ use crate::field::F16Element;
 use std::ops::{Add, Mul};
 /// A column vector of F_16 elements
 #[derive(Debug, PartialEq)]
-pub struct FieldVector(Vec<F16Element>);
+pub struct FieldVector(pub Vec<F16Element>);
 
 /// A matrix of F_16 elements
 #[derive(Debug, PartialEq)]
@@ -59,9 +59,22 @@ impl FieldMatrix {
         FieldMatrix { rows, cols, data }
     }
 
-    fn get(&self, row: usize, col: usize) -> F16Element {
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    pub fn data(&self) -> &[F16Element] {
+        &self.data
+    }
+
+    pub fn get(&self, row: usize, col: usize) -> F16Element {
         self.data[row * self.cols + col]
     }
+
     fn get_row(&self, i: usize) -> &[F16Element] {
         &self.data[i * self.cols .. (i + 1) * self.cols]
     }
