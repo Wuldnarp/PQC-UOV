@@ -23,11 +23,29 @@ fn hash(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
     hasher.update(salt);
 
     let mut reader = hasher.finalize_xof();
-    // let elements = need some kind of unpacking
-    //  For F16 , we pack two field elements into one byte with the first element in the least
-    // significant nibble.
-    // FieldVector(elements)
-    todo!()
+    // Maybe not the right way to do it with code
+    // squeezing the SHAKE256 output and unpacking the bytes into F16 elements.
+    // I will look into it
+    let bytes_to_read = (m+1)/2;
+    let mut buffer = vec![0u8; bytes_to_read];
+    reader.read(&mut buffer);
+
+    let mut elements = Vec::with_capacity(m);
+    
+    for byte in buffer {
+        // Least significant nibble
+        elements.push(F16Element::new(byte & 0x0F));
+        if elements.len() == m {
+            break;
+        }
+        
+        // Most significant Nibble
+        elements.push(F16Element::new((byte >> 4) & 0x0F));
+        if elements.len() == m {
+            break;
+        }
+    }
+    FieldVector::new(elements)
 }
 
 /// Expand the secret seed into the trapdoor matrix O of shape (n-m) × m
@@ -38,10 +56,36 @@ fn hash(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
 /// 
 /// output is (n-m)*m F_16 elements
 fn expand_sk(seed: &[u8]) -> FieldMatrix{
+    // Maybe a better place to have parameters
+    const M: usize = 64;  
+    // n - m
+    const V: usize = 96;
     let mut hasher = Shake256::default();
     hasher.update(seed);
     let mut reader = hasher.finalize_xof();
-    todo!()
+    
+    let total_elements = V * M;
+    let bytes_to_read = (total_elements+1)/2;
+    let mut buffer = vec![0u8; bytes_to_read];
+    reader.read(&mut buffer);
+
+    let mut elements = Vec::with_capacity(total_elements);
+    
+    for byte in buffer {
+        // Least significant nibble
+        elements.push(F16Element::new(byte & 0x0F));
+        if elements.len() == total_elements {
+            break;
+        }
+        
+        // Most significant Nibble
+        elements.push(F16Element::new((byte >> 4) & 0x0F));
+        if elements.len() == total_elements {
+            break;
+        }
+    }
+    FieldMatrix::new(V, M, elements)
+
 }
 
 fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
@@ -67,10 +111,53 @@ fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
     let mut keystream = vec![0u8; total_bytes];
     cipher.apply_keystream(&mut keystream);
 
-    //Need a way to unpack bytes into F16Element instances
-    // And split segments to populate matrices
+    let mut elements = Vec::with_capacity(total_elements);
+    for byte in keystream {
+        elements.push(F16Element::new(byte & 0x0F));
+        if elements.len() == total_elements {
+            break;
+        }
+        elements.push(F16Element::new((byte >> 4) & 0x0F));
+        if elements.len() == total_elements {
+            break;
+        }
+    }
 
-    todo!()
+    let mut element_iter = elements.into_iter();
+    let mut p1_data_blocks = vec![vec![F16Element::new(0); V * V]; M];
+    let mut p2_data_blocks = vec![vec![F16Element::new(0); V * M]; M];
+    for i in 0..V {
+        for j in i..V {
+            for k in 0..M {
+                if let Some(elem) = element_iter.next() {
+                    p1_data_blocks[k][i * V + j] = elem;
+                }
+            }
+        }
+    }
+
+    // 4. Populate P2 matrices 
+    for i in 0..V {
+        for j in 0..M {
+            for k in 0..M {
+                if let Some(elem) = element_iter.next() {
+                    p2_data_blocks[k][i * M + j] = elem;
+                }
+            }
+        }
+    }
+
+    let p1_matrices = p1_data_blocks
+        .into_iter()
+        .map(|data| FieldMatrix::new(V, V, data))
+        .collect();
+
+    let p2_matrices = p2_data_blocks
+        .into_iter()
+        .map(|data| FieldMatrix::new(V, M, data)) 
+        .collect();
+
+    (p1_matrices, p2_matrices)
 }
 
 /// Generate the vinegar vector v ∈ F_16^(n-m) for a signing attempt
@@ -79,12 +166,32 @@ fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
 /// 
 /// Implemented as SHAKE256(message || salt || seed_sk || ctr)
 fn expand_v(message: &[u8], salt: &[u8], seed: &[u8], ctr: u8) -> FieldVector{
-    // maybe
+        const V: usize = 96;
     let mut hasher = Shake256::default();
     hasher.update(message);
     hasher.update(salt);
     hasher.update(seed);
     hasher.update(&[ctr]);
     let mut reader = hasher.finalize_xof();
-    todo!()
+    
+    let bytes_to_read = (V + 1) / 2;
+    let mut buffer = vec![0u8; bytes_to_read];
+    
+    reader.read(&mut buffer);
+
+    let mut elements = Vec::with_capacity(V);
+    
+    for byte in buffer {
+        elements.push(F16Element::new(byte & 0x0F));
+        if elements.len() == V {
+            break;
+        }
+        
+        elements.push(F16Element::new((byte >> 4) & 0x0F));
+        if elements.len() == V {
+            break;
+        }
+    }
+
+    FieldVector::new(elements)
 }
