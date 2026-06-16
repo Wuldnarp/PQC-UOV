@@ -82,11 +82,6 @@ fn expand_sk(seed: &[u8]) -> FieldMatrix{
 }
 
 fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
-    // Maybe a better place to have parameters
-    const M: usize = 64;  
-    // n - m
-    const V: usize = 96;
-
     // maybe the math aint mathing but will look at it
     // m * ((n-m)(n-m+1))/2 and sub (n+m) for V
     let p1_elements_per_matrix = (V * (V + 1)) / 2;
