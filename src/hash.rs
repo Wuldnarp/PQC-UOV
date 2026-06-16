@@ -51,9 +51,6 @@ fn hash(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
     hasher.update(salt);
 
     let mut reader = hasher.finalize_xof();
-    // Maybe not the right way to do it with code
-    // squeezing the SHAKE256 output and unpacking the bytes into F16 elements.
-    // I will look into it
     let bytes_to_read = (m+1)/2;
     let mut buffer = vec![0u8; bytes_to_read];
     reader.read(&mut buffer);
@@ -142,7 +139,6 @@ fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
 /// 
 /// Implemented as SHAKE256(message || salt || seed_sk || ctr)
 fn expand_v(message: &[u8], salt: &[u8], seed: &[u8], ctr: u8) -> FieldVector{
-        const V: usize = 96;
     let mut hasher = Shake256::default();
     hasher.update(message);
     hasher.update(salt);
@@ -152,7 +148,6 @@ fn expand_v(message: &[u8], salt: &[u8], seed: &[u8], ctr: u8) -> FieldVector{
     
     let bytes_to_read = (V + 1) / 2;
     let mut buffer = vec![0u8; bytes_to_read];
-    
     reader.read(&mut buffer);
 
     FieldVector::new(unpack_f16(&buffer, V))
