@@ -99,18 +99,7 @@ fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
     let mut keystream = vec![0u8; total_bytes];
     cipher.apply_keystream(&mut keystream);
 
-    let mut elements = Vec::with_capacity(total_elements);
-    for byte in keystream {
-        elements.push(F16Element::new(byte & 0x0F));
-        if elements.len() == total_elements {
-            break;
-        }
-        elements.push(F16Element::new((byte >> 4) & 0x0F));
-        if elements.len() == total_elements {
-            break;
-        }
-    }
-
+    let elements = unpack_f16(&keystream, total_elements);
     let mut element_iter = elements.into_iter();
     let mut p1_data_blocks = vec![vec![F16Element::new(0); V * V]; M];
     let mut p2_data_blocks = vec![vec![F16Element::new(0); V * M]; M];
