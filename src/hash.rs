@@ -58,22 +58,7 @@ fn hash(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
     let mut buffer = vec![0u8; bytes_to_read];
     reader.read(&mut buffer);
 
-    let mut elements = Vec::with_capacity(m);
-    
-    for byte in buffer {
-        // Least significant nibble
-        elements.push(F16Element::new(byte & 0x0F));
-        if elements.len() == m {
-            break;
-        }
-        
-        // Most significant Nibble
-        elements.push(F16Element::new((byte >> 4) & 0x0F));
-        if elements.len() == m {
-            break;
-        }
-    }
-    FieldVector::new(elements)
+    FieldVector::new(unpack_f16(&buffer, m))
 }
 
 /// Expand the secret seed into the trapdoor matrix O of shape (n-m) × m
@@ -84,10 +69,6 @@ fn hash(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
 /// 
 /// output is (n-m)*m F_16 elements
 fn expand_sk(seed: &[u8]) -> FieldMatrix{
-    // Maybe a better place to have parameters
-    const M: usize = 64;  
-    // n - m
-    const V: usize = 96;
     let mut hasher = Shake256::default();
     hasher.update(seed);
     let mut reader = hasher.finalize_xof();
@@ -97,23 +78,7 @@ fn expand_sk(seed: &[u8]) -> FieldMatrix{
     let mut buffer = vec![0u8; bytes_to_read];
     reader.read(&mut buffer);
 
-    let mut elements = Vec::with_capacity(total_elements);
-    
-    for byte in buffer {
-        // Least significant nibble
-        elements.push(F16Element::new(byte & 0x0F));
-        if elements.len() == total_elements {
-            break;
-        }
-        
-        // Most significant Nibble
-        elements.push(F16Element::new((byte >> 4) & 0x0F));
-        if elements.len() == total_elements {
-            break;
-        }
-    }
-    FieldMatrix::new(V, M, elements)
-
+    FieldMatrix::new(V, M, unpack_f16(&buffer, total_elements))
 }
 
 fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
@@ -163,8 +128,7 @@ fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
             }
         }
     }
-
-    // 4. Populate P2 matrices 
+ 
     for i in 0..V {
         for j in 0..M {
             for k in 0..M {
@@ -207,19 +171,5 @@ fn expand_v(message: &[u8], salt: &[u8], seed: &[u8], ctr: u8) -> FieldVector{
     
     reader.read(&mut buffer);
 
-    let mut elements = Vec::with_capacity(V);
-    
-    for byte in buffer {
-        elements.push(F16Element::new(byte & 0x0F));
-        if elements.len() == V {
-            break;
-        }
-        
-        elements.push(F16Element::new((byte >> 4) & 0x0F));
-        if elements.len() == V {
-            break;
-        }
-    }
-
-    FieldVector::new(elements)
+    FieldVector::new(unpack_f16(&buffer, V))
 }
