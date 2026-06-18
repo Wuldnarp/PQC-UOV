@@ -46,7 +46,7 @@ impl Neg for F16Element {
 impl F16Element {
 
     /// The multiplicative inverse - used in Gaussian elimination
-    fn inverse(self) -> Self{
+    pub fn inverse(self) -> Self{
         assert!(self.0 != 0, "zero has no inverse");
         F16Element(INV_TABLE[self.0 as usize])
     }

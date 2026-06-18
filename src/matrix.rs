@@ -75,8 +75,12 @@ impl FieldMatrix {
         self.data[row * self.cols + col]
     }
 
-    fn get_row(&self, i: usize) -> &[F16Element] {
-        &self.data[i * self.cols .. (i + 1) * self.cols]
+    fn get_row(&self, row: usize) -> &[F16Element] {
+        &self.data[row * self.cols .. (row + 1) * self.cols]
+    }
+
+    fn set(&mut self, row: usize, col: usize, val: F16Element) {
+        self.data[row * self.cols + col] = val;
     }
 
     /// Multiply matrix with another matrix
@@ -136,32 +140,84 @@ impl FieldMatrix {
     }
 
     /// Extract the upper triangular part of a matrix
-    pub fn upper(&self) -> Self{
-        todo!()
-    }
+    fn upper(&self) -> Self{
+        assert_eq!(self.rows, self.cols);
 
+        let n = self.rows;
+        let mut data = vec![F16Element::zero(); n * n];
 
-    /// Negate the matrix
-    pub fn negate(&self) -> Self{
-        let mut data = Vec::with_capacity(self.rows * self.cols);
-
-        for j in 0..self.rows * self.cols {
-            for i in 0..self.rows {
-                data.push(-self.get(i, j));
+        for idx in 0..self.data.len() {
+            let i = idx / n;
+            let j = idx % n;
+            if i <= j { // upper triangle + diagonal
+                data[idx] =
+                if i == j { // diagonal
+                    self.data[idx]
+                } else { // upper triangle
+                    self.data[idx] + self.data[j * n + i]
+                };
             }
         }
 
-        FieldMatrix {
-            rows: self.cols,
-            cols: self.rows,
-            data,
-        }
+        FieldMatrix { rows: n, cols: n, data }
     }
 
     /// Solve the linear system using Gaussian elimination
     /// 
     /// returns None if if the system has no unique solution (matrix not invertible)
-    pub fn gaussian_elimination(&self, rhs: &FieldVector) -> Option<FieldVector>{
-        todo!()
+    fn gaussian_elimination(&self, rhs: &FieldVector) -> Option<FieldVector>{
+        assert_eq!(self.rows, self.cols);
+        let m = self.rows;
+        assert_eq!(m, rhs.0.len());
+
+        let width = m + 1;
+
+        // Build augmented matrix L' = (L | rhs), size m × (m+1)
+        let mut l = FieldMatrix::new(m, m + 1, vec![F16Element::zero(); m * (m + 1)]);
+
+        for i in 0..m {
+            for j in 0..m {
+                l.set(i, j, self.get(i, j));
+            }
+            l.set(i, m, rhs.0[i]);
+        }
+
+        // Forward elimination (lines 2-14)
+        for i in 0..m {
+            // Lines 3-6: conditionally add later rows to fix zero pivot
+            for j in (i + 1)..m {
+                if l.get(i, i) == F16Element::zero() {
+                    for k in i..width {
+                        l.set(i, k, l.get(i, k) + l.get(j, k));
+                    }
+                }
+            }
+            // Line 7: early abort
+            if l.get(i, i) == F16Element::zero() {
+                return None; // singular
+            }
+
+            // Lines 8-10: normalize pivot row
+            let p_inv = l.get(i, i).inverse();
+            for k in i..width {
+                l.set(i, k, l.get(i, k) * p_inv);
+            }
+
+            // Lines 11-14: eliminate column i from all other rows
+            for j in 0..m {
+                if j != i {
+                    let factor = l.get(j, i);
+                    if factor != F16Element::zero() {
+                        for k in i..width {
+                            l.set(j, k, l.get(j, k) + factor * l.get(i, k));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Extract last column as the solution
+        let result = (0..m).map(|i| l.get(i, m)).collect();
+        Some(FieldVector(result))
     }
 }
