@@ -36,7 +36,7 @@ impl FieldVector{
     }
 }
 
-/// Multiply with column vector
+/// Multiply with matrix
 impl Mul for FieldMatrix {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
