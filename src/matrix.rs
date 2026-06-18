@@ -1,11 +1,11 @@
 use crate::field::F16Element;
 use std::ops::{Add, Mul};
 /// A column vector of F_16 elements
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FieldVector(pub Vec<F16Element>);
 
 /// A matrix of F_16 elements
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FieldMatrix {
     rows: usize,
     cols: usize,
@@ -80,7 +80,7 @@ impl FieldMatrix {
     }
 
     /// Multiply matrix with another matrix
-    fn multiply_with_matrix(&self, other: Self) -> Self {
+    pub fn multiply_with_matrix(&self, other: Self) -> Self {
         assert_eq!(self.cols, other.rows);
 
         let mut data = Vec::with_capacity(self.rows * other.cols);
@@ -102,7 +102,7 @@ impl FieldMatrix {
     /// Multiply matrix by column vector
     /// 
     /// Produces column vector of length rows
-    fn multiply_with_vector(&self, v: FieldVector) -> FieldVector{
+    pub fn multiply_with_vector(&self, v: FieldVector) -> FieldVector{
         assert_eq!(self.cols, v.0.len());
 
         let result = (0..self.rows)
@@ -119,7 +119,7 @@ impl FieldMatrix {
     }
 
     /// Transpose the matrix (swap rows and cols)
-    fn transpose(&self) -> Self{
+    pub fn transpose(&self) -> Self{
         let mut data = Vec::with_capacity(self.rows * self.cols);
 
         for j in 0..self.cols {
@@ -136,14 +136,32 @@ impl FieldMatrix {
     }
 
     /// Extract the upper triangular part of a matrix
-    fn upper(&self) -> Self{
+    pub fn upper(&self) -> Self{
         todo!()
+    }
+
+
+    /// Negate the matrix
+    pub fn negate(&self) -> Self{
+        let mut data = Vec::with_capacity(self.rows * self.cols);
+
+        for j in 0..self.rows * self.cols {
+            for i in 0..self.rows {
+                data.push(-self.get(i, j));
+            }
+        }
+
+        FieldMatrix {
+            rows: self.cols,
+            cols: self.rows,
+            data,
+        }
     }
 
     /// Solve the linear system using Gaussian elimination
     /// 
     /// returns None if if the system has no unique solution (matrix not invertible)
-    fn gaussian_elimination(&self, rhs: &FieldVector) -> Option<FieldVector>{
+    pub fn gaussian_elimination(&self, rhs: &FieldVector) -> Option<FieldVector>{
         todo!()
     }
 }
