@@ -140,7 +140,7 @@ impl FieldMatrix {
     }
 
     /// Extract the upper triangular part of a matrix
-    fn upper(&self) -> Self{
+    pub fn upper(&self) -> Self{
         assert_eq!(self.rows, self.cols);
 
         let n = self.rows;

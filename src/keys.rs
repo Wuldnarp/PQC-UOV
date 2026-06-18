@@ -70,7 +70,7 @@ pub fn keygen() -> (PublicKey, SecretKey)
 
     let o = expand_sk(&seed_sk);
     // Does -OT means negative matrix transposed?
-    let ot = o.clone().transpose().negate();
+    let ot = o.clone().transpose();
 
     let (p1,p2) = expand_p(&seed_pk);
     let m = p1.len();

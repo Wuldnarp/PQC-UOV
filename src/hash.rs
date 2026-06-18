@@ -65,7 +65,7 @@ fn hash(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
 /// Implemented as SHAKE256(seed_sk)
 /// 
 /// output is (n-m)*m F_16 elements
-fn expand_sk(seed: &[u8]) -> FieldMatrix{
+pub fn expand_sk(seed: &[u8]) -> FieldMatrix{
     let mut hasher = Shake256::default();
     hasher.update(seed);
     let mut reader = hasher.finalize_xof();
@@ -78,7 +78,7 @@ fn expand_sk(seed: &[u8]) -> FieldMatrix{
     FieldMatrix::new(V, M, unpack_f16(&buffer, total_elements))
 }
 
-fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
+pub fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
     // maybe the math aint mathing but will look at it
     // m * ((n-m)(n-m+1))/2 and sub (n+m) for V
     let p1_elements_per_matrix = (V * (V + 1)) / 2;
@@ -138,7 +138,7 @@ fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
 /// ctr needs to increment each time Gaussian elimination fails, to give a fresh v to retry with
 /// 
 /// Implemented as SHAKE256(message || salt || seed_sk || ctr)
-fn expand_v(message: &[u8], salt: &[u8], seed: &[u8], ctr: u8) -> FieldVector{
+pub fn expand_v(message: &[u8], salt: &[u8], seed: &[u8], ctr: u8) -> FieldVector{
     let mut hasher = Shake256::default();
     hasher.update(message);
     hasher.update(salt);
