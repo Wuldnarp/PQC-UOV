@@ -101,21 +101,19 @@ pub fn expand_p(seed_pk: &[u8]) -> (Vec<FieldMatrix>, Vec<FieldMatrix>) {
     let mut p1_data_blocks = vec![vec![F16Element::new(0); V * V]; M];
     let mut p2_data_blocks = vec![vec![F16Element::new(0); V * M]; M];
     for i in 0..V {
-        for j in i..V {
+        for j in 0..=i {
             for k in 0..M {
-                if let Some(elem) = element_iter.next() {
-                    p1_data_blocks[k][i * V + j] = elem;
-                }
+                let elem = element_iter.next().unwrap();
+                p1_data_blocks[k][j * V + i] = elem;
             }
         }
     }
 
-    for i in 0..V {
-        for j in 0..M {
+    for i in 0..M {
+        for j in 0..V {
             for k in 0..M {
-                if let Some(elem) = element_iter.next() {
-                    p2_data_blocks[k][i * M + j] = elem;
-                }
+                let elem = element_iter.next().unwrap();
+                p2_data_blocks[k][j * M + i] = elem;
             }
         }
     }
