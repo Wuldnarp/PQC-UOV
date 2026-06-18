@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Neg, Sub};
 /// A single element of the finite field F_16
 /// 
 /// Only the lower 4 bits are used
@@ -33,6 +33,13 @@ impl Mul for F16Element {
     type Output = Self;
     fn mul(self, other: Self) -> Self::Output {
         F16Element(MUL_TABLE[self.0 as usize][other.0 as usize])
+    }
+}
+
+impl Neg for F16Element {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        F16Element(0-self.0)
     }
 }
 

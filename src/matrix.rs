@@ -84,7 +84,7 @@ impl FieldMatrix {
     }
 
     /// Multiply matrix with another matrix
-    fn multiply_with_matrix(&self, other: Self) -> Self {
+    pub fn multiply_with_matrix(&self, other: Self) -> Self {
         assert_eq!(self.cols, other.rows);
 
         let mut data = Vec::with_capacity(self.rows * other.cols);
@@ -106,7 +106,7 @@ impl FieldMatrix {
     /// Multiply matrix by column vector
     /// 
     /// Produces column vector of length rows
-    fn multiply_with_vector(&self, v: FieldVector) -> FieldVector{
+    pub fn multiply_with_vector(&self, v: FieldVector) -> FieldVector{
         assert_eq!(self.cols, v.0.len());
 
         let result = (0..self.rows)
@@ -123,7 +123,7 @@ impl FieldMatrix {
     }
 
     /// Transpose the matrix (swap rows and cols)
-    fn transpose(&self) -> Self{
+    pub fn transpose(&self) -> Self{
         let mut data = Vec::with_capacity(self.rows * self.cols);
 
         for j in 0..self.cols {
@@ -140,7 +140,7 @@ impl FieldMatrix {
     }
 
     /// Extract the upper triangular part of a matrix
-    fn upper(&self) -> Self{
+    pub fn upper(&self) -> Self{
         assert_eq!(self.rows, self.cols);
 
         let n = self.rows;
@@ -150,10 +150,10 @@ impl FieldMatrix {
             let i = idx / n;
             let j = idx % n;
             if i <= j { // upper triangle + diagonal
-                data[idx] = 
-                if i == j { // diagonal 
+                data[idx] =
+                if i == j { // diagonal
                     self.data[idx]
-                } else { // upper triangle 
+                } else { // upper triangle
                     self.data[idx] + self.data[j * n + i]
                 };
             }
@@ -171,7 +171,7 @@ impl FieldMatrix {
         assert_eq!(m, rhs.0.len());
 
         let width = m + 1;
-        
+
         // Build augmented matrix L' = (L | rhs), size m × (m+1)
         let mut l = FieldMatrix::new(m, m + 1, vec![F16Element::zero(); m * (m + 1)]);
 
