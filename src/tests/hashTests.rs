@@ -7,7 +7,7 @@ fn test_hash() {
     let salt = b"1234567890123456";
     let m = 64;
 
-    let hashed = hash(message, salt, m);
+    let hashed = hash_message(message, salt, m);
     assert_eq!(hashed.0.len(), m, "The Target vector must have exactly M elements");
     for elem in hashed.0.iter() {
             assert!(elem.0 < 16, "Element out of bounds for F_16: {}", elem.0);

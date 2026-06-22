@@ -45,7 +45,7 @@ fn unpack_f16(buffer: &[u8], count: usize) -> Vec<F16Element> {
 /// 
 /// output is m F_16 elements
 /// 
-fn hash(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
+pub fn hash_message(message: &[u8], salt: &[u8], m: usize) -> FieldVector{
     let mut hasher = Shake256::default();
     hasher.update(message);
     hasher.update(salt);

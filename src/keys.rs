@@ -1,5 +1,5 @@
 use crate::matrix::FieldMatrix;
-use crate::hash::{expand_sk, expand_p, expand_v};
+use crate::hash::{expand_sk, expand_p};
 use rand::rngs::OsRng;
 use rand::TryRngCore;
 
@@ -8,11 +8,12 @@ use rand::TryRngCore;
 /// 
 /// P¹ and P² are not stored - they can be regenerated from seed_pk
 pub struct PublicKey {
-    p3_matrices: Vec<FieldMatrix>
+    pub p3_matrices: Vec<FieldMatrix>,
+    pub seed_pk: [u8; 16],
 }
 impl PublicKey {
-    pub fn new(matrices: Vec<FieldMatrix>) -> PublicKey {
-        PublicKey{p3_matrices: matrices}
+    pub fn new(matrices: Vec<FieldMatrix>, seed_pk: [u8; 16]) -> PublicKey {
+        PublicKey{p3_matrices: matrices, seed_pk}
     }
 }
 
@@ -20,36 +21,31 @@ impl PublicKey {
 pub struct SecretKey {
 
     /// Seed for generating the trapdoor O via expand_sk
-    seed_sk: [u8; 32],
-
-    /// Seed for regenerating P¹ and P² via expand_pk
-    seed_pk: [u8; 16],
+    pub seed_sk: [u8; 32],
 
     /// The trapdoor matrix O of shape (n-m) × m
-    o_matrix: FieldMatrix,
+    pub o_matrix: FieldMatrix,
 
     /// The m matrices P¹, each of shape (n-m) × (n-m)
     /// 
     /// Stored here for fast signing
-    p1_matrices: Vec<FieldMatrix>,
+    pub p1_matrices: Vec<FieldMatrix>,
 
     /// The precomputed matrices S, one per polynomial
     /// 
     /// Stored to avoid recomputing during every signing operation
-    s_matrices: Vec<FieldMatrix>
+    pub s_matrices: Vec<FieldMatrix>
 }
 
 impl SecretKey {
     pub fn new(
         seed_sk: [u8; 32],
-        seed_pk: [u8; 16],
         o_matrix: FieldMatrix,
         p1_matrices: Vec<FieldMatrix>,
         s_matrices: Vec<FieldMatrix>) -> SecretKey
     {
         Self{
             seed_sk,
-            seed_pk,
             o_matrix,
             p1_matrices,
             s_matrices
@@ -68,22 +64,32 @@ pub fn keygen() -> (PublicKey, SecretKey)
     rng.try_fill_bytes(&mut seed_sk).expect("seed_sk RNG failure");
     rng.try_fill_bytes(&mut seed_pk).expect("seed_pk RNG failure");
 
+    // O: V × M (secret oil subspace)
     let o = expand_sk(&seed_sk);
-    // Does -OT means negative matrix transposed?
-    let ot = o.clone().transpose();
+    let ot = o.transpose();
 
     let (p1,p2) = expand_p(&seed_pk);
     let m = p1.len();
 
-    let mut p3: Vec<FieldMatrix> = Vec::new();
-    for i in 0..m-1 {
-        let otp = ot.multiply_with_matrix(p2[i].clone());
-        let opo = ot.multiply_with_matrix(p1[i].multiply_with_matrix(o.clone()));
-        p3.push(opo.multiply_with_matrix(otp).upper());
+    // compute p3 and s matrices
+    let mut p3: Vec<FieldMatrix> = Vec::with_capacity(m);
+    let mut s_matrices: Vec<FieldMatrix> = Vec::with_capacity(m);
+
+    for i in 0..m {
+        // P3_i = Upper(O^T P1_i O + O^T P2_i)
+        let ot_p1_o = ot.clone() * p1[i].clone() * o.clone();
+        let ot_p2 = ot.clone() * p2[i].clone();
+
+        p3.push((ot_p1_o + ot_p2).upper());
+
+        // S_i = (P1_i + P1_i^T) * O + P2_i
+        let p1_sym = p1[i].clone() + p1[i].transpose();
+        let s = p1_sym * o.clone() + p2[i].clone();
+        s_matrices.push(s);
     }
 
-    let sk = SecretKey::new(seed_sk, seed_pk, ot, p1, p3.clone());
-    let pk = PublicKey::new(p3.clone());
+    let sk = SecretKey::new(seed_sk, o, p1, s_matrices);
+    let pk = PublicKey::new(p3,seed_pk);
 
     (pk, sk)
 }

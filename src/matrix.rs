@@ -36,6 +36,20 @@ impl FieldVector{
     }
 }
 
+/// add for matrix 
+impl Add for FieldMatrix {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        assert_eq!(self.rows, other.rows);
+        assert_eq!(self.cols, other.cols);
+        let data = self.data.iter()
+            .zip(other.data.iter())
+            .map(|(a, b)| *a + *b)
+            .collect();
+        FieldMatrix { rows: self.rows, cols: self.cols, data }
+    }
+}
+
 /// Multiply with matrix
 impl Mul for FieldMatrix {
     type Output = Self;
@@ -165,7 +179,7 @@ impl FieldMatrix {
     /// Solve the linear system using Gaussian elimination
     /// 
     /// returns None if if the system has no unique solution (matrix not invertible)
-    fn gaussian_elimination(&self, rhs: &FieldVector) -> Option<FieldVector>{
+    pub fn gaussian_elimination(&self, rhs: &FieldVector) -> Option<FieldVector>{
         assert_eq!(self.rows, self.cols);
         let m = self.rows;
         assert_eq!(m, rhs.0.len());
