@@ -20,7 +20,11 @@ cargo test
 ```
 To run the measurement test with output
 ```bash
-cargo test --test timing -- --nocapture
+cargo test --release --test timing -- --nocapture
+```
+To run with cycles use this:
+```bash
+cargo test --release --test cycleTiming -- --nocapture
 ```
 
 ## GF(16) Elements
