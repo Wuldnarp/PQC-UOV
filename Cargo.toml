@@ -3,6 +3,14 @@ name = "pqc_uov"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "uov"
+path = "src/main.rs"
+
+[lib]
+name = "uov"
+path = "src/lib.rs"
+
 [dependencies]
 aes = "0.9.1"
 ctr = "0.10.1"

@@ -1,5 +1,28 @@
 # PQC-UOV
 
+## Instructions
+
+### Prerequisites
+Having Rust with Cargo installed  
+
+### Build
+
+Run the following command to build the project 
+```bash
+cargo build --release
+```
+
+### Tests
+
+To run all tests execute the following command
+```bash
+cargo test
+```
+To run the measurement test with output
+```bash
+cargo test --test timing -- --nocapture
+```
+
 ## GF(16) Elements
 | Decimal | Binary   | Polynomial          |
 |---------|----------|---------------------|
