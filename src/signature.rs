@@ -89,7 +89,6 @@ pub fn verify(pk: &PublicKey, message: &[u8], sig: &Signature) -> bool{
 
     // Recompute t = Hash(message || salt)
     let t = hash_message(message, &sig.salt, M);
-    let (p1, p2) = expand_p(&pk.seed_pk);
 
     // Split s into sv and so
     let sv = FieldVector(s.0[..V].to_vec());
@@ -98,13 +97,13 @@ pub fn verify(pk: &PublicKey, message: &[u8], sig: &Signature) -> bool{
     for i in 0..M {
 
         // sv^T P1_i sv
-        let p1_sv = p1[i].clone() * sv.clone();
+        let p1_sv = pk.p1_matrices[i].clone() * sv.clone();
         let svt_p1_sv = sv.0.iter().zip(p1_sv.0.iter())
             .map(|(a, b)| *a * *b)
             .fold(F16Element::zero(), |acc, x| acc + x);
 
         // sv^T P2_i so
-        let p2_so = p2[i].clone() * so.clone();
+        let p2_so = pk.p2_matrices[i].clone() * so.clone();
         let svt_p2_so = sv.0.iter().zip(p2_so.0.iter())
             .map(|(a, b)| *a * *b)
             .fold(F16Element::zero(), |acc, x| acc + x);

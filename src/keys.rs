@@ -10,10 +10,17 @@ use rand::TryRngCore;
 pub struct PublicKey {
     pub p3_matrices: Vec<FieldMatrix>,
     pub seed_pk: [u8; 16],
+    pub p1_matrices: Vec<FieldMatrix>,
+    pub p2_matrices: Vec<FieldMatrix>,
 }
 impl PublicKey {
-    pub fn new(matrices: Vec<FieldMatrix>, seed_pk: [u8; 16]) -> PublicKey {
-        PublicKey{p3_matrices: matrices, seed_pk}
+    pub fn new(
+        matrices: Vec<FieldMatrix>,
+        seed_pk: [u8; 16],
+        p1_matrices: Vec<FieldMatrix>,
+        p2_matrices: Vec<FieldMatrix>) -> PublicKey {
+        PublicKey{
+            p3_matrices: matrices, seed_pk,p1_matrices,p2_matrices}
     }
 }
 
@@ -88,8 +95,8 @@ pub fn keygen() -> (PublicKey, SecretKey)
         s_matrices.push(s);
     }
 
-    let sk = SecretKey::new(seed_sk, o, p1, s_matrices);
-    let pk = PublicKey::new(p3,seed_pk);
+    let sk = SecretKey::new(seed_sk, o, p1.clone(), s_matrices);
+    let pk = PublicKey::new(p3,seed_pk,p1,p2);
 
     (pk, sk)
 }
